@@ -1,0 +1,73 @@
+package com.questionbank.model;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.OffsetDateTime;
+import java.util.List;
+
+@Entity
+@Table(name = "questions")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Question {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, length = 20)
+    @Convert(converter = QuestionTypeConverter.class)
+    private QuestionType type;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String question;
+
+    // JSONB: stores List<String> for MCQ / MULTI_CORRECT
+    @Type(JsonBinaryType.class)
+    @Column(columnDefinition = "jsonb")
+    private List<String> options;
+
+    // JSONB: stores Integer (mcq), Boolean (true_false), List<Integer> (multi_correct), null (match_pair)
+    @Type(JsonBinaryType.class)
+    @Column(name = "correct_answer", columnDefinition = "jsonb")
+    private JsonNode correctAnswer;
+
+    // JSONB: stores List<MatchPair> for MATCH_PAIR questions
+    @Type(JsonBinaryType.class)
+    @Column(columnDefinition = "jsonb")
+    private List<MatchPair> pairs;
+
+    @Column(nullable = false, length = 10)
+    @Builder.Default
+    private String difficulty = "Medium";
+
+    @Column(nullable = false, length = 100)
+    @Builder.Default
+    private String subject = "General Knowledge";
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer points = 1;
+
+    @Column(columnDefinition = "TEXT")
+    private String explanation;
+
+    @Column(columnDefinition = "TEXT")
+    private String tags;
+
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private OffsetDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private OffsetDateTime updatedAt;
+}
