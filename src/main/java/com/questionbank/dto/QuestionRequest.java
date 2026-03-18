@@ -1,6 +1,7 @@
 package com.questionbank.dto;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.questionbank.model.ComprehensiveSubQuestion;
 import com.questionbank.model.MatchPair;
 import com.questionbank.model.QuestionType;
 import jakarta.validation.constraints.Max;
@@ -27,6 +28,8 @@ public class QuestionRequest {
     private JsonNode correctAnswer;
 
     private List<MatchPair> pairs;
+
+    private List<ComprehensiveSubQuestion> subQuestions;
 
     @Pattern(regexp = "Easy|Medium|Hard", message = "Difficulty must be Easy, Medium, or Hard")
     private String difficulty = "Medium";

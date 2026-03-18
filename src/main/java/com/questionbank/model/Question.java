@@ -45,6 +45,11 @@ public class Question {
     @Column(columnDefinition = "jsonb")
     private List<MatchPair> pairs;
 
+    // JSONB: stores List<ComprehensiveSubQuestion> for COMPREHENSIVE questions
+    @Type(JsonBinaryType.class)
+    @Column(name = "sub_questions", columnDefinition = "jsonb")
+    private List<ComprehensiveSubQuestion> subQuestions;
+
     @Column(nullable = false, length = 10)
     @Builder.Default
     private String difficulty = "Medium";

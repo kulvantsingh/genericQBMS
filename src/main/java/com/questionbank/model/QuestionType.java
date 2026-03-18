@@ -7,7 +7,9 @@ public enum QuestionType {
     MCQ("mcq"),
     TRUE_FALSE("true_false"),
     MULTI_CORRECT("multi_correct"),
-    MATCH_PAIR("match_pair");
+    MATCH_PAIR("match_pair"),
+    ARRANGE_SEQUENCE("arrange_sequence"),
+    COMPREHENSIVE("comprehensive");
 
     private final String value;
 
