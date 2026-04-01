@@ -81,6 +81,12 @@ public class QuestionService {
         existing.setPoints(resolvePoints(request));
         existing.setExplanation(request.getExplanation());
         existing.setTags(request.getTags());
+        existing.setBookName(request.getBookName());
+        existing.setBookEdition(request.getBookEdition());
+        existing.setIsbn(request.getIsbn());
+        existing.setEtgNumber(request.getEtgNumber());
+        existing.setPageNumber(request.getPageNumber());
+        existing.setQuestionNumber(request.getQuestionNumber());
 
         Question updated = questionRepository.save(existing);
         log.info("Updated question id={}", id);
@@ -103,6 +109,12 @@ public class QuestionService {
         if (request.getPoints()       != null) existing.setPoints(request.getPoints());
         if (request.getExplanation()  != null) existing.setExplanation(request.getExplanation());
         if (request.getTags()         != null) existing.setTags(request.getTags());
+        if (request.getBookName()     != null) existing.setBookName(request.getBookName());
+        if (request.getBookEdition()  != null) existing.setBookEdition(request.getBookEdition());
+        if (request.getIsbn()         != null) existing.setIsbn(request.getIsbn());
+        if (request.getEtgNumber()    != null) existing.setEtgNumber(request.getEtgNumber());
+        if (request.getPageNumber()   != null) existing.setPageNumber(request.getPageNumber());
+        if (request.getQuestionNumber()!= null) existing.setQuestionNumber(request.getQuestionNumber());
 
         if (existing.getType() == QuestionType.COMPREHENSIVE && request.getSubQuestions() != null) {
             existing.setPoints(existing.getSubQuestions().stream()
@@ -289,6 +301,12 @@ public class QuestionService {
             .points(resolvePoints(req))
             .explanation(req.getExplanation())
             .tags(req.getTags())
+            .bookName(req.getBookName())
+            .bookEdition(req.getBookEdition())
+            .isbn(req.getIsbn())
+            .etgNumber(req.getEtgNumber())
+            .pageNumber(req.getPageNumber())
+            .questionNumber(req.getQuestionNumber())
             .build();
     }
 
@@ -317,6 +335,12 @@ public class QuestionService {
         res.setPoints(q.getPoints());
         res.setExplanation(q.getExplanation());
         res.setTags(q.getTags());
+        res.setBookName(q.getBookName());
+        res.setBookEdition(q.getBookEdition());
+        res.setIsbn(q.getIsbn());
+        res.setEtgNumber(q.getEtgNumber());
+        res.setPageNumber(q.getPageNumber());
+        res.setQuestionNumber(q.getQuestionNumber());
         res.setCreatedAt(q.getCreatedAt());
         res.setUpdatedAt(q.getUpdatedAt());
         return res;

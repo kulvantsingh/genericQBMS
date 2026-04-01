@@ -44,4 +44,22 @@ public class QuestionRequest {
     private String explanation;
 
     private String tags;
+
+    @Size(max = 255)
+    private String bookName;
+
+    @Size(max = 255)
+    private String bookEdition;
+
+    @Size(max = 50)
+    private String isbn;
+
+    @Size(max = 100)
+    private String etgNumber;
+
+    @Size(max = 50)
+    private String pageNumber;
+
+    @Size(max = 50)
+    private String questionNumber;
 }

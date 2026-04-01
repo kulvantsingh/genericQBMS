@@ -68,6 +68,24 @@ public class Question {
     @Column(columnDefinition = "TEXT")
     private String tags;
 
+    @Column(name = "book_name", length = 255)
+    private String bookName;
+
+    @Column(name = "book_edition", length = 255)
+    private String bookEdition;
+
+    @Column(length = 50)
+    private String isbn;
+
+    @Column(name = "etg_number", length = 100)
+    private String etgNumber;
+
+    @Column(name = "page_number", length = 50)
+    private String pageNumber;
+
+    @Column(name = "question_number", length = 50)
+    private String questionNumber;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private OffsetDateTime createdAt;

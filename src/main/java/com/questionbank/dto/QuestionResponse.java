@@ -23,6 +23,12 @@ public class QuestionResponse {
     private Integer points;
     private String explanation;
     private String tags;
+    private String bookName;
+    private String bookEdition;
+    private String isbn;
+    private String etgNumber;
+    private String pageNumber;
+    private String questionNumber;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
 }
