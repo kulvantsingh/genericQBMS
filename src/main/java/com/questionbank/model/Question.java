@@ -30,6 +30,9 @@ public class Question {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String question;
 
+    @Column(columnDefinition = "TEXT")
+    private String instruction;
+
     // JSONB: stores List<String> for MCQ / MULTI_CORRECT
     @Type(JsonBinaryType.class)
     @Column(columnDefinition = "jsonb")

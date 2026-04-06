@@ -23,6 +23,8 @@ public class QuestionRequest {
     @NotBlank(message = "Question text is required")
     private String question;
 
+    private String instruction;
+
     private List<String> options;
 
     private JsonNode correctAnswer;

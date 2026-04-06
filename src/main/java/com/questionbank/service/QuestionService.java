@@ -58,7 +58,9 @@ public class QuestionService {
             .stream()
             .filter(question -> srch == null
                 || (question.getQuestion() != null
-                && question.getQuestion().toLowerCase(Locale.ROOT).contains(srch)))
+                && question.getQuestion().toLowerCase(Locale.ROOT).contains(srch))
+                || (question.getInstruction() != null
+                && question.getInstruction().toLowerCase(Locale.ROOT).contains(srch)))
             .map(this::mapToResponse)
             .collect(Collectors.toList());
     }
@@ -72,6 +74,7 @@ public class QuestionService {
 
         existing.setType(request.getType());
         existing.setQuestion(request.getQuestion());
+        existing.setInstruction(request.getInstruction());
         existing.setOptions(request.getOptions());
         existing.setCorrectAnswer(request.getCorrectAnswer());
         existing.setPairs(request.getPairs());
@@ -100,6 +103,7 @@ public class QuestionService {
         Question existing = findOrThrow(id);
 
         if (request.getQuestion()     != null) existing.setQuestion(request.getQuestion());
+        if (request.getInstruction()  != null) existing.setInstruction(request.getInstruction());
         if (request.getOptions()      != null) existing.setOptions(request.getOptions());
         if (request.getCorrectAnswer()!= null) existing.setCorrectAnswer(request.getCorrectAnswer());
         if (request.getPairs()        != null) existing.setPairs(request.getPairs());
@@ -292,6 +296,7 @@ public class QuestionService {
         return Question.builder()
             .type(req.getType())
             .question(req.getQuestion())
+            .instruction(req.getInstruction())
             .options(req.getOptions())
             .correctAnswer(req.getCorrectAnswer())
             .pairs(req.getPairs())
@@ -326,6 +331,7 @@ public class QuestionService {
         res.setId(q.getId());
         res.setType(q.getType());
         res.setQuestion(q.getQuestion());
+        res.setInstruction(q.getInstruction());
         res.setOptions(q.getOptions());
         res.setCorrectAnswer(q.getCorrectAnswer());
         res.setPairs(q.getPairs());

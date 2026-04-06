@@ -14,6 +14,7 @@ public class QuestionResponse {
     private Long id;
     private QuestionType type;
     private String question;
+    private String instruction;
     private List<String> options;
     private JsonNode correctAnswer;
     private List<MatchPair> pairs;

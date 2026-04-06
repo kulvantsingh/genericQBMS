@@ -1,0 +1,17 @@
+C:\Generic QBMS\BackEnd\genericQBMS\src\main\java\com\questionbank\config\AppConfig.java
+C:\Generic QBMS\BackEnd\genericQBMS\src\main\java\com\questionbank\dto\StatsResponse.java
+C:\Generic QBMS\BackEnd\genericQBMS\src\main\java\com\questionbank\exception\GlobalExceptionHandler.java
+C:\Generic QBMS\BackEnd\genericQBMS\src\main\java\com\questionbank\service\QuestionService.java
+C:\Generic QBMS\BackEnd\genericQBMS\src\main\java\com\questionbank\QuestionBankApplication.java
+C:\Generic QBMS\BackEnd\genericQBMS\src\main\java\com\questionbank\model\QuestionTypeConverter.java
+C:\Generic QBMS\BackEnd\genericQBMS\src\main\java\com\questionbank\dto\ApiResponse.java
+C:\Generic QBMS\BackEnd\genericQBMS\src\main\java\com\questionbank\model\Question.java
+C:\Generic QBMS\BackEnd\genericQBMS\src\main\java\com\questionbank\exception\QuestionValidationException.java
+C:\Generic QBMS\BackEnd\genericQBMS\src\main\java\com\questionbank\repository\QuestionRepository.java
+C:\Generic QBMS\BackEnd\genericQBMS\src\main\java\com\questionbank\controller\QuestionController.java
+C:\Generic QBMS\BackEnd\genericQBMS\src\main\java\com\questionbank\exception\QuestionNotFoundException.java
+C:\Generic QBMS\BackEnd\genericQBMS\src\main\java\com\questionbank\dto\QuestionRequest.java
+C:\Generic QBMS\BackEnd\genericQBMS\src\main\java\com\questionbank\dto\QuestionResponse.java
+C:\Generic QBMS\BackEnd\genericQBMS\src\main\java\com\questionbank\model\MatchPair.java
+C:\Generic QBMS\BackEnd\genericQBMS\src\main\java\com\questionbank\model\ComprehensiveSubQuestion.java
+C:\Generic QBMS\BackEnd\genericQBMS\src\main\java\com\questionbank\model\QuestionType.java
