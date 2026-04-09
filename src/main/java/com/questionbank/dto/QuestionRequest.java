@@ -1,9 +1,7 @@
 package com.questionbank.dto;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.questionbank.model.ComprehensiveSubQuestion;
-import com.questionbank.model.MatchPair;
 import com.questionbank.model.QuestionType;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -25,19 +23,23 @@ public class QuestionRequest {
 
     private String instruction;
 
-    private List<String> options;
+    @Valid
+    private List<QuestionOptionDto> options;
 
-    private JsonNode correctAnswer;
+    @Valid
+    private List<QuestionAnswerDto> answers;
 
-    private List<MatchPair> pairs;
+    @Valid
+    private List<QuestionMatchPairDto> pairs;
 
-    private List<ComprehensiveSubQuestion> subQuestions;
+    @Valid
+    private List<SubQuestionDto> subQuestions;
 
     @Pattern(regexp = "Easy|Medium|Hard", message = "Difficulty must be Easy, Medium, or Hard")
     private String difficulty = "Medium";
 
-    @Size(max = 100)
-    private String subject = "General Knowledge";
+    @Valid
+    private SubjectDto subject;
 
     @Min(value = 1, message = "Points must be at least 1")
     @Max(value = 100, message = "Points cannot exceed 100")
@@ -45,16 +47,11 @@ public class QuestionRequest {
 
     private String explanation;
 
-    private String tags;
+    @Valid
+    private List<TagDto> tags;
 
-    @Size(max = 255)
-    private String bookName;
-
-    @Size(max = 255)
-    private String bookEdition;
-
-    @Size(max = 50)
-    private String isbn;
+    @Valid
+    private BookDto book;
 
     @Size(max = 100)
     private String etgNumber;

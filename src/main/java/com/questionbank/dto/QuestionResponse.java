@@ -1,8 +1,5 @@
 package com.questionbank.dto;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.questionbank.model.ComprehensiveSubQuestion;
-import com.questionbank.model.MatchPair;
 import com.questionbank.model.QuestionType;
 import lombok.Data;
 
@@ -15,18 +12,16 @@ public class QuestionResponse {
     private QuestionType type;
     private String question;
     private String instruction;
-    private List<String> options;
-    private JsonNode correctAnswer;
-    private List<MatchPair> pairs;
-    private List<ComprehensiveSubQuestion> subQuestions;
+    private List<QuestionOptionDto> options;
+    private List<QuestionAnswerDto> answers;
+    private List<QuestionMatchPairDto> pairs;
+    private List<SubQuestionDto> subQuestions;
     private String difficulty;
-    private String subject;
+    private SubjectDto subject;
     private Integer points;
     private String explanation;
-    private String tags;
-    private String bookName;
-    private String bookEdition;
-    private String isbn;
+    private List<TagDto> tags;
+    private BookDto book;
     private String etgNumber;
     private String pageNumber;
     private String questionNumber;

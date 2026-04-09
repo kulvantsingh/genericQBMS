@@ -17,9 +17,10 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
 
     @Query("""
         SELECT q FROM Question q
+        LEFT JOIN q.subject subject
         WHERE (:type     IS NULL OR q.type       = :type)
           AND (:difficulty IS NULL OR q.difficulty = :difficulty)
-          AND (:subject   IS NULL OR q.subject    = :subject)
+          AND (:subject   IS NULL OR LOWER(subject.name) = :subject)
         ORDER BY q.createdAt DESC
         """)
     List<Question> findAllWithFilters(
@@ -36,7 +37,13 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
     @Query("SELECT q.difficulty AS difficulty, COUNT(q) AS count FROM Question q GROUP BY q.difficulty")
     List<Map<String, Object>> countByDifficulty();
 
-    @Query("SELECT q.subject AS subject, COUNT(q) AS count FROM Question q GROUP BY q.subject ORDER BY count DESC")
+    @Query("""
+        SELECT COALESCE(subject.name, 'Unassigned') AS subject, COUNT(q) AS count
+        FROM Question q
+        LEFT JOIN q.subject subject
+        GROUP BY COALESCE(subject.name, 'Unassigned')
+        ORDER BY count DESC
+        """)
     List<Map<String, Object>> countBySubject();
 
     // ── By type ─────────────────────────────────────────────────────────────
@@ -45,5 +52,5 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
 
     List<Question> findByDifficultyOrderByCreatedAtDesc(String difficulty);
 
-    List<Question> findBySubjectOrderByCreatedAtDesc(String subject);
+    List<Question> findBySubject_NameIgnoreCaseOrderByCreatedAtDesc(String subject);
 }
