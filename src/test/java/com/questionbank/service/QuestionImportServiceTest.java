@@ -78,7 +78,6 @@ class QuestionImportServiceTest {
         assertEquals("Number Theory Basics", response.getQuestions().get(0).getBook().getName());
         assertEquals("2nd Edition", response.getQuestions().get(0).getBook().getEdition());
         assertEquals("9780123456789", response.getQuestions().get(0).getBook().getIsbn());
-        assertEquals(3, response.getQuestions().get(0).getTags().size());
     }
 
     @Test

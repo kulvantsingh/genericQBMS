@@ -9,7 +9,6 @@ import com.questionbank.dto.QuestionResponse;
 import com.questionbank.dto.StatsResponse;
 import com.questionbank.dto.SubjectDto;
 import com.questionbank.dto.SubQuestionDto;
-import com.questionbank.dto.TagDto;
 import com.questionbank.exception.QuestionNotFoundException;
 import com.questionbank.exception.QuestionValidationException;
 import com.questionbank.model.Book;
@@ -23,11 +22,9 @@ import com.questionbank.model.SubQuestionAnswer;
 import com.questionbank.model.SubQuestionMatchPair;
 import com.questionbank.model.SubQuestionOption;
 import com.questionbank.model.Subject;
-import com.questionbank.model.Tag;
 import com.questionbank.repository.BookRepository;
 import com.questionbank.repository.QuestionRepository;
 import com.questionbank.repository.SubjectRepository;
-import com.questionbank.repository.TagRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -36,12 +33,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -55,7 +50,6 @@ public class QuestionService {
     private final QuestionRepository questionRepository;
     private final SubjectRepository subjectRepository;
     private final BookRepository bookRepository;
-    private final TagRepository tagRepository;
 
     @Transactional
     public QuestionResponse create(QuestionRequest request) {
@@ -180,9 +174,6 @@ public class QuestionService {
         }
         if (fullReplace || request.getSubQuestions() != null) {
             replaceSubQuestions(question, request.getSubQuestions());
-        }
-        if (fullReplace || request.getTags() != null) {
-            replaceTags(question, request.getTags());
         }
 
         pruneUnsupportedChildren(question);
@@ -339,24 +330,6 @@ public class QuestionService {
                 .build();
             subQuestion.getMatchPairs().add(pair);
         }
-    }
-
-    private void replaceTags(Question question, List<TagDto> tagDtos) {
-        Set<Tag> existingTags = Set.copyOf(question.getTags());
-        existingTags.forEach(question::removeTag);
-
-        if (tagDtos == null) {
-            return;
-        }
-
-        Map<String, Tag> uniqueTags = new LinkedHashMap<>();
-        for (TagDto dto : tagDtos) {
-            Tag tag = resolveTag(dto);
-            if (tag != null) {
-                uniqueTags.putIfAbsent(tag.getName().toLowerCase(Locale.ROOT), tag);
-            }
-        }
-        uniqueTags.values().forEach(question::addTag);
     }
 
     private void pruneUnsupportedChildren(Question question) {
@@ -620,25 +593,6 @@ public class QuestionService {
                 .build()));
     }
 
-    private Tag resolveTag(TagDto dto) {
-        if (dto == null) {
-            return null;
-        }
-        if (dto.getId() != null) {
-            return tagRepository.findById(dto.getId())
-                .orElseThrow(() -> new QuestionValidationException("Tag not found: " + dto.getId()));
-        }
-
-        String name = trimToNull(dto.getName());
-        if (name == null) {
-            return null;
-        }
-
-        String tagName = name;
-        return tagRepository.findByNameIgnoreCase(tagName)
-            .orElseGet(() -> tagRepository.save(Tag.builder().name(tagName).build()));
-    }
-
     public QuestionResponse mapToResponse(Question question) {
         QuestionResponse response = new QuestionResponse();
         response.setId(question.getId());
@@ -670,10 +624,6 @@ public class QuestionService {
         response.setSubject(mapSubject(question.getSubject()));
         response.setPoints(question.getPoints());
         response.setExplanation(question.getExplanation());
-        response.setTags(question.getTags().stream()
-            .sorted(Comparator.comparing(Tag::getName, String.CASE_INSENSITIVE_ORDER))
-            .map(this::mapTag)
-            .collect(Collectors.toCollection(ArrayList::new)));
         response.setBook(mapBook(question.getBook()));
         response.setEtgNumber(question.getEtgNumber());
         response.setPageNumber(question.getPageNumber());
@@ -733,13 +683,6 @@ public class QuestionService {
         dto.setName(book.getName());
         dto.setEdition(book.getEdition());
         dto.setIsbn(book.getIsbn());
-        return dto;
-    }
-
-    private TagDto mapTag(Tag tag) {
-        TagDto dto = new TagDto();
-        dto.setId(tag.getId());
-        dto.setName(tag.getName());
         return dto;
     }
 

@@ -203,7 +203,6 @@ class QuestionImportParserServiceTest {
         assertTrue(response.getErrors().isEmpty());
         assertEquals("comprehensive", response.getQuestions().get(0).getType().getValue());
         assertEquals("Mathematics", response.getQuestions().get(0).getSubject().getName());
-        assertEquals(4, response.getQuestions().get(0).getTags().size());
         assertEquals(2, response.getQuestions().get(0).getSubQuestions().size());
         assertEquals(4, response.getQuestions().get(0).getSubQuestions().get(0).getOptions().size());
         assertEquals("12", response.getQuestions().get(0).getSubQuestions().get(0).getOptions().get(1).getText());

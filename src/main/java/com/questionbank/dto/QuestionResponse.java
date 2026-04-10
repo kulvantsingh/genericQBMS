@@ -20,7 +20,6 @@ public class QuestionResponse {
     private SubjectDto subject;
     private Integer points;
     private String explanation;
-    private List<TagDto> tags;
     private BookDto book;
     private String etgNumber;
     private String pageNumber;

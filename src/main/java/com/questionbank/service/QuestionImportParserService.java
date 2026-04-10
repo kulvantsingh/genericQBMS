@@ -9,7 +9,6 @@ import com.questionbank.dto.QuestionMatchPairDto;
 import com.questionbank.dto.QuestionOptionDto;
 import com.questionbank.dto.SubjectDto;
 import com.questionbank.dto.SubQuestionDto;
-import com.questionbank.dto.TagDto;
 import com.questionbank.model.QuestionType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.HtmlUtils;
@@ -19,11 +18,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -62,7 +59,6 @@ public class QuestionImportParserService {
     private static final String FIELD_QUESTION_NUMBER = "Q. No.";
     private static final String FIELD_DIFFICULTY = "Difficulty";
     private static final String FIELD_POINTS = "Points";
-    private static final String FIELD_TAGS = "Tags";
 
     private static final List<String> METADATA_ORDER = List.of(
         FIELD_TYPE,
@@ -73,8 +69,7 @@ public class QuestionImportParserService {
         FIELD_PAGE,
         FIELD_QUESTION_NUMBER,
         FIELD_DIFFICULTY,
-        FIELD_POINTS,
-        FIELD_TAGS
+        FIELD_POINTS
     );
 
     public QuestionImportParseResponse parse(String extractedText) {
@@ -139,7 +134,6 @@ public class QuestionImportParserService {
         question.setPoints(parsePoints(metadata.get(FIELD_POINTS), question.getWarnings()));
         question.setSubject(parseSubject(metadata.get(FIELD_SUBJECT)));
         question.setBook(parseBook(metadata.get(FIELD_BOOK)));
-        question.setTags(parseTags(metadata.get(FIELD_TAGS)));
         question.setEtgNumber(trimToNull(metadata.get(FIELD_ETG)));
         question.setPageNumber(trimToNull(metadata.get(FIELD_PAGE)));
         question.setQuestionNumber(trimToNull(metadata.get(FIELD_QUESTION_NUMBER)));
@@ -939,29 +933,6 @@ public class QuestionImportParserService {
             book.setName(cleaned);
         }
         return book;
-    }
-
-    private List<TagDto> parseTags(String value) {
-        String cleaned = trimToNull(value);
-        if (cleaned == null) {
-            return new ArrayList<>();
-        }
-
-        Set<String> uniqueNames = new LinkedHashSet<>();
-        for (String part : cleaned.split("\\s*,\\s*")) {
-            String tagName = trimToNull(part);
-            if (tagName != null) {
-                uniqueNames.add(tagName.toLowerCase(Locale.ROOT));
-            }
-        }
-
-        List<TagDto> tags = new ArrayList<>();
-        for (String uniqueName : uniqueNames) {
-            TagDto tag = new TagDto();
-            tag.setName(uniqueName);
-            tags.add(tag);
-        }
-        return tags;
     }
 
     private Integer parsePoints(String value, List<String> warnings) {

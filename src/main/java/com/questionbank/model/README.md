@@ -6,7 +6,6 @@
 |---|---|
 | Subject.java | `questions.subject` VARCHAR column |
 | Book.java | `questions.book_name / book_edition / isbn` columns |
-| Tag.java | `questions.tags` plain-text CSV column |
 | Question.java | Original Question.java (JSONB fields removed) |
 | QuestionOption.java | `questions.options` JSONB |
 | QuestionAnswer.java | `questions.correct_answer` JSONB |

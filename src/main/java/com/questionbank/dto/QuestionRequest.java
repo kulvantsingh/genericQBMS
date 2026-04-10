@@ -48,9 +48,6 @@ public class QuestionRequest {
     private String explanation;
 
     @Valid
-    private List<TagDto> tags;
-
-    @Valid
     private BookDto book;
 
     @Size(max = 100)

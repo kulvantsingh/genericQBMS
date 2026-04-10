@@ -7,9 +7,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Normalized replacement for the original single-table Question entity.
@@ -21,7 +19,6 @@ import java.util.Set;
  *  - correctAnswer (JSONB)  → @OneToMany QuestionAnswer
  *  - pairs    (JSONB)       → @OneToMany QuestionMatchPair
  *  - subQuestions (JSONB)   → @OneToMany SubQuestion
- *  - tags     (TEXT CSV)    → @ManyToMany Tag
  */
 @Entity
 @Table(name = "questions")
@@ -137,19 +134,6 @@ public class Question {
 
     // ── Tags (many-to-many) ───────────────────────────────────────────────────
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-        name = "question_tags",
-        joinColumns        = @JoinColumn(name = "question_id"),
-        inverseJoinColumns = @JoinColumn(name = "tag_id"),
-        foreignKey         = @ForeignKey(name = "fk_question_tags_question"),
-        inverseForeignKey  = @ForeignKey(name = "fk_question_tags_tag")
-    )
-    @Builder.Default
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    private Set<Tag> tags = new HashSet<>();
-
     // ── Convenience helpers ───────────────────────────────────────────────────
 
     public void addOption(QuestionOption option) {
@@ -172,13 +156,4 @@ public class Question {
         subQuestions.add(subQuestion);
     }
 
-    public void addTag(Tag tag) {
-        tags.add(tag);
-        tag.getQuestions().add(this);
-    }
-
-    public void removeTag(Tag tag) {
-        tags.remove(tag);
-        tag.getQuestions().remove(this);
-    }
 }
