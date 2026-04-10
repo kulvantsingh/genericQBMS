@@ -11,7 +11,7 @@ import lombok.*;
  *   <li>TRUE_FALSE      → answer_type="boolean", answer_value="true"</li>
  *   <li>MULTI_CORRECT   → one row per correct index, answer_type="index"</li>
  *   <li>ARRANGE_SEQUENCE→ one row per position,  answer_type="index",
- *                          answer_value="0","2","1",… (ordered by answer_order)</li>
+ *                          answer_value="1","3","2",… (ordered by answer_order)</li>
  * </ul>
  * MATCH_PAIR questions use {@link QuestionMatchPair} instead.
  */

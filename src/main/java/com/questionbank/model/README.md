@@ -53,5 +53,5 @@ In application.properties:
 | MCQ               | "index"    | "2"                  | null        |
 | TRUE_FALSE        | "boolean"  | "true"               | null        |
 | MULTI_CORRECT     | "index"    | "0", "3"             | 0, 1        |
-| ARRANGE_SEQUENCE  | "index"    | "2", "0", "1"        | 0, 1, 2     |
+| ARRANGE_SEQUENCE  | "index"    | "3", "1", "2"        | 0, 1, 2     |
 | MATCH_PAIR        | — (uses QuestionMatchPair table instead) | | |

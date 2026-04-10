@@ -1,6 +1,7 @@
 package com.questionbank.exception;
 
 import com.questionbank.dto.ApiResponse;
+import com.questionbank.dto.QuestionImportIssueDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestControllerAdvice
@@ -27,6 +29,28 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(QuestionValidationException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidation(QuestionValidationException ex) {
         log.warn("Validation error: {}", ex.getMessage());
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(QuestionImportValidationException.class)
+    public ResponseEntity<ApiResponse<List<QuestionImportIssueDto>>> handleImportValidation(
+        QuestionImportValidationException ex
+    ) {
+        log.warn("Import validation error: {}", ex.getErrors());
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(ApiResponse.<List<QuestionImportIssueDto>>builder()
+                .success(false)
+                .message(ex.getMessage())
+                .data(ex.getErrors())
+                .build());
+    }
+
+    @ExceptionHandler(UnsupportedImportFileException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUnsupportedImportFile(UnsupportedImportFileException ex) {
+        log.warn("Import file error: {}", ex.getMessage());
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
             .body(ApiResponse.error(ex.getMessage()));

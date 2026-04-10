@@ -448,7 +448,7 @@ public class QuestionService {
             case MATCH_PAIR -> requireMatchPairs(question.getMatchPairs(), "Match-pair");
             case ARRANGE_SEQUENCE -> {
                 requireOptionCount(question.getOptions(), "Arrange-sequence", 2);
-                requireIndexedAnswerList(question.getAnswers(), question.getOptions().size(), "Arrange-sequence", true);
+                requireOneBasedIndexedAnswerList(question.getAnswers(), question.getOptions().size(), "Arrange-sequence", true);
                 if (question.getAnswers().size() != question.getOptions().size()) {
                     throw new QuestionValidationException("Arrange-sequence options and answers must contain the same number of items");
                 }
@@ -491,7 +491,7 @@ public class QuestionService {
             case MATCH_PAIR -> requireMatchPairs(subQuestion.getMatchPairs(), label + " Match-pair");
             case ARRANGE_SEQUENCE -> {
                 requireOptionCount(subQuestion.getOptions(), label + " Arrange-sequence", 2);
-                requireIndexedAnswerList(subQuestion.getAnswers(), subQuestion.getOptions().size(), label + " Arrange-sequence", true);
+                requireOneBasedIndexedAnswerList(subQuestion.getAnswers(), subQuestion.getOptions().size(), label + " Arrange-sequence", true);
                 if (subQuestion.getAnswers().size() != subQuestion.getOptions().size()) {
                     throw new QuestionValidationException(label + " Arrange-sequence options and answers must contain the same number of items");
                 }
@@ -525,10 +525,14 @@ public class QuestionService {
     }
 
     private void requireIndexedAnswerList(List<?> answers, int optionCount, String label, boolean ordered) {
-        validateIndexedAnswerList(answers, optionCount, label, ordered);
+        validateIndexedAnswerList(answers, optionCount, label, ordered, false);
     }
 
-    private void validateIndexedAnswerList(List<?> answers, int optionCount, String label, boolean ordered) {
+    private void requireOneBasedIndexedAnswerList(List<?> answers, int optionCount, String label, boolean ordered) {
+        validateIndexedAnswerList(answers, optionCount, label, ordered, true);
+    }
+
+    private void validateIndexedAnswerList(List<?> answers, int optionCount, String label, boolean ordered, boolean oneBased) {
         if (answers == null || answers.isEmpty()) {
             throw new QuestionValidationException(label + " requires at least 1 answer");
         }
@@ -540,7 +544,7 @@ public class QuestionService {
         }
         for (Object answer : sortedAnswers) {
             requireAnswerType(extractAnswerType(answer), "index", label + " answer type must be index");
-            validateIndexValue(extractAnswerValue(answer), optionCount, label + " answer index out of range");
+            validateIndexValue(extractAnswerValue(answer), optionCount, label + " answer index out of range", oneBased);
         }
     }
 
@@ -775,9 +779,13 @@ public class QuestionService {
     }
 
     private void validateIndexValue(String value, int optionCount, String message) {
+        validateIndexValue(value, optionCount, message, false);
+    }
+
+    private void validateIndexValue(String value, int optionCount, String message, boolean oneBased) {
         try {
             int index = Integer.parseInt(value);
-            if (index < 0 || index >= optionCount) {
+            if (oneBased ? index < 1 || index > optionCount : index < 0 || index >= optionCount) {
                 throw new QuestionValidationException(message);
             }
         } catch (NumberFormatException ex) {
