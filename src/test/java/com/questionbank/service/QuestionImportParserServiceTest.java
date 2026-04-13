@@ -210,4 +210,70 @@ class QuestionImportParserServiceTest {
         assertEquals("true_false", response.getQuestions().get(0).getSubQuestions().get(1).getType().getValue());
         assertEquals("true", response.getQuestions().get(0).getSubQuestions().get(1).getAnswers().get(0).getValue());
     }
+
+    @Test
+    void parse_supportsGroupedSubjectFormatWithPreQuestionMetadataAndAliases() {
+        String text = String.join("\n",
+            "Subject: Mathematics",
+            "Sub Topic: Number System",
+            "Type:\tMCQ",
+            "Instruction:\tSelect one correct answer",
+            "Q1. Find the H.C.F. of 48 and 180.",
+            "Options:",
+            "A. 6",
+            "B. 12",
+            "C. 24",
+            "D. 36",
+            "Correct Answer: B",
+            "Difficulty Level: Easy",
+            "Justification:",
+            "48 = 2^4 x 3, 180 = 2^2 x 3^2 x 5, Common = 2^2 x 3 = 12",
+            "Metadata:",
+            "Book:\tNumber Theory Basics, 2nd Edition, ISBN: 9780123456789",
+            "ETG No.:ETG-11",
+            "Page:\t45",
+            "Q. No.:\tQ1",
+            "Points:\t1",
+            "Sub Topic: Quantative",
+            "Type:\tMulti-correct",
+            "Instruction:\tSelect all correct answers",
+            "Q2. Find the H.C.F. of 50 and 180.",
+            "Options:",
+            "A. 61",
+            "B. 122",
+            "C. 241",
+            "D. 361",
+            "Correct Answer: C",
+            "Difficulty Level: Easy",
+            "Justification:",
+            "48 = 2^4 x 3, 180 = 2^2 x 3^2 x 5, Common = 2^2 x 3 = 12",
+            "Metadata:",
+            "Book:\tNumber Theory Basics, 2nd Edition, ISBN: 9780123456789",
+            "ETG No.:\tETG-11",
+            "Page:\t46",
+            "Q. No.:\tQ2",
+            "Points:\t2"
+        );
+
+        QuestionImportParseResponse response = parserService.parse(text);
+
+        assertTrue(response.getErrors().isEmpty());
+        assertEquals(2, response.getQuestions().size());
+        assertEquals("Mathematics", response.getQuestions().get(0).getSubject().getName());
+        assertEquals("Mathematics", response.getQuestions().get(1).getSubject().getName());
+        assertEquals("mcq", response.getQuestions().get(0).getType().getValue());
+        assertEquals("multi_correct", response.getQuestions().get(1).getType().getValue());
+        assertEquals("Easy", response.getQuestions().get(0).getDifficulty());
+        assertEquals("Easy", response.getQuestions().get(1).getDifficulty());
+        assertEquals("12", response.getQuestions().get(0).getOptions().get(1).getText());
+        assertEquals("1", response.getQuestions().get(0).getAnswers().get(0).getValue());
+        assertEquals("<p>48 = 2^4 x 3, 180 = 2^2 x 3^2 x 5, Common = 2^2 x 3 = 12</p>",
+            response.getQuestions().get(0).getExplanation());
+        assertEquals("9780123456789", response.getQuestions().get(0).getBook().getIsbn());
+        assertEquals("ETG-11", response.getQuestions().get(0).getEtgNumber());
+        assertEquals(2, response.getQuestions().get(1).getPoints());
+        assertEquals("Q2", response.getQuestions().get(1).getQuestionNumber());
+        assertEquals("9780123456789", response.getQuestions().get(1).getBook().getIsbn());
+        assertEquals("ETG-11", response.getQuestions().get(1).getEtgNumber());
+    }
 }

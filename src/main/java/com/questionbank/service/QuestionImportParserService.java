@@ -44,7 +44,7 @@ public class QuestionImportParserService {
     private static final Pattern INDEX_PATTERN =
         Pattern.compile("(?i)(?:index(?:es)?|indices)\\s*(?::|=|[-–—])?\\s*([\\d,\\s]+)");
     private static final Pattern ISBN_PATTERN =
-        Pattern.compile("(?i)^ISBN\\s*:\\s*(.+)$");
+        Pattern.compile("(?i)^I\\s*S\\s*B\\s*N\\s*:\\s*(.+)$");
     private static final Pattern IMAGE_MARKER_PATTERN =
         Pattern.compile("\\[\\[IMG:(data:image/[^\\]]+)]]");
     private static final Pattern MATH_MARKER_PATTERN =
@@ -53,6 +53,7 @@ public class QuestionImportParserService {
     private static final String FIELD_TYPE = "Type";
     private static final String FIELD_INSTRUCTION = "Instruction";
     private static final String FIELD_SUBJECT = "Subject";
+    private static final String FIELD_SUB_TOPIC = "Sub Topic";
     private static final String FIELD_BOOK = "Book";
     private static final String FIELD_ETG = "ETG No.";
     private static final String FIELD_PAGE = "Page";
@@ -78,12 +79,21 @@ public class QuestionImportParserService {
 
         List<QuestionImportQuestionDto> questions = new ArrayList<>();
         List<QuestionImportIssueDto> errors = new ArrayList<>();
+        String inheritedSubject = null;
 
         int sourceIndex = 0;
         for (List<String> block : blocks) {
             sourceIndex++;
+            String blockSubject = extractLeadingMetadataValue(block, FIELD_SUBJECT);
+            if (blockSubject != null) {
+                inheritedSubject = blockSubject;
+            }
             try {
-                questions.add(parseQuestionBlock(block, sourceIndex));
+                QuestionImportQuestionDto question = parseQuestionBlock(block, sourceIndex, inheritedSubject);
+                questions.add(question);
+                if (question.getSubject() != null && trimToNull(question.getSubject().getName()) != null) {
+                    inheritedSubject = question.getSubject().getName();
+                }
             } catch (RuntimeException ex) {
                 errors.add(QuestionImportIssueDto.builder()
                     .sourceIndex(sourceIndex)
@@ -99,18 +109,30 @@ public class QuestionImportParserService {
             .build();
     }
 
-    private QuestionImportQuestionDto parseQuestionBlock(List<String> block, int sourceIndex) {
+    private QuestionImportQuestionDto parseQuestionBlock(List<String> block, int sourceIndex, String inheritedSubject) {
         if (block.isEmpty()) {
             throw new IllegalArgumentException("Question block was empty");
         }
 
-        Matcher startMatcher = QUESTION_START_PATTERN.matcher(block.get(0));
+        int questionStartIndex = findIndex(block, line -> QUESTION_START_PATTERN.matcher(line).matches());
+        if (questionStartIndex < 0) {
+            throw new IllegalArgumentException("Question block does not contain a valid question marker");
+        }
+
+        Matcher startMatcher = QUESTION_START_PATTERN.matcher(block.get(questionStartIndex));
         if (!startMatcher.matches()) {
             throw new IllegalArgumentException("Question block does not start with a valid question marker");
         }
 
         QuestionImportQuestionDto question = new QuestionImportQuestionDto();
         question.setSourceIndex(sourceIndex);
+        question.setOptions(new ArrayList<>());
+        question.setAnswers(new ArrayList<>());
+        question.setPairs(new ArrayList<>());
+        question.setSubQuestions(new ArrayList<>());
+
+        Map<String, String> metadata = new LinkedHashMap<>();
+        collectMetadataInto(slice(block, 0, questionStartIndex), 0, metadata);
 
         List<String> questionLines = new ArrayList<>();
         String firstLineText = trimToNull(startMatcher.group(2));
@@ -118,31 +140,30 @@ public class QuestionImportParserService {
             questionLines.add(firstLineText);
         }
 
-        int index = 1;
-        while (index < block.size() && metadataField(block.get(index)) == null) {
+        int index = questionStartIndex + 1;
+        while (index < block.size() && !isMetadataOrWrapperLine(block.get(index)) && !isSectionBoundary(block.get(index))) {
             questionLines.add(block.get(index));
             index++;
         }
 
         question.setQuestion(toHtml(questionLines));
 
-        MetadataResult metadataResult = parseMetadata(block, index);
-        Map<String, String> metadata = metadataResult.values();
+        List<String> content = new ArrayList<>();
+        collectMetadataAndContent(block, index, metadata, content);
+
         question.setType(resolveType(metadata, block, question.getWarnings()));
         question.setInstruction(toHtml(metadata.get(FIELD_INSTRUCTION)));
         question.setDifficulty(normalizeDifficulty(metadata.get(FIELD_DIFFICULTY)));
         question.setPoints(parsePoints(metadata.get(FIELD_POINTS), question.getWarnings()));
-        question.setSubject(parseSubject(metadata.get(FIELD_SUBJECT)));
+        String subjectValue = trimToNull(metadata.get(FIELD_SUBJECT));
+        if (subjectValue == null) {
+            subjectValue = trimToNull(inheritedSubject);
+        }
+        question.setSubject(parseSubject(subjectValue));
         question.setBook(parseBook(metadata.get(FIELD_BOOK)));
         question.setEtgNumber(trimToNull(metadata.get(FIELD_ETG)));
         question.setPageNumber(trimToNull(metadata.get(FIELD_PAGE)));
         question.setQuestionNumber(trimToNull(metadata.get(FIELD_QUESTION_NUMBER)));
-        question.setOptions(new ArrayList<>());
-        question.setAnswers(new ArrayList<>());
-        question.setPairs(new ArrayList<>());
-        question.setSubQuestions(new ArrayList<>());
-
-        List<String> content = slice(block, metadataResult.nextIndex(), block.size());
         switch (question.getType()) {
             case MCQ, MULTI_CORRECT, TRUE_FALSE -> parseChoiceQuestion(question, content);
             case ARRANGE_SEQUENCE -> parseArrangeSequenceQuestion(question, content);
@@ -157,37 +178,76 @@ public class QuestionImportParserService {
         return question;
     }
 
-    private MetadataResult parseMetadata(List<String> lines, int startIndex) {
-        Map<String, String> values = new LinkedHashMap<>();
+    private void collectMetadataAndContent(
+        List<String> lines,
+        int startIndex,
+        Map<String, String> metadata,
+        List<String> content
+    ) {
         int index = startIndex;
-
         while (index < lines.size()) {
             String line = lines.get(index);
-            String field = metadataField(line);
-            if (field == null) {
-                break;
-            }
-
-            index++;
-            List<String> valueLines = new ArrayList<>();
-            String sameLineValue = trimToNull(line.substring(line.indexOf(':') + 1));
-            if (sameLineValue != null) {
-                valueLines.add(sameLineValue);
-            }
-
-            while (index < lines.size()) {
-                String candidate = lines.get(index);
-                if (metadataField(candidate) != null || isSectionBoundary(candidate)) {
-                    break;
-                }
-                valueLines.add(candidate);
+            if (isMetadataWrapperLine(line)) {
                 index++;
+                continue;
             }
 
-            values.put(field, joinLines(valueLines));
+            String field = metadataField(line);
+            if (field != null) {
+                index = collectMetadataField(lines, index, metadata, false);
+                continue;
+            }
+
+            content.add(line);
+            index++;
+        }
+    }
+
+    private int collectMetadataInto(List<String> lines, int startIndex, Map<String, String> metadata) {
+        int index = startIndex;
+        while (index < lines.size()) {
+            if (isMetadataWrapperLine(lines.get(index))) {
+                index++;
+                continue;
+            }
+
+            String field = metadataField(lines.get(index));
+            if (field == null) {
+                index++;
+                continue;
+            }
+            index = collectMetadataField(lines, index, metadata, true);
+        }
+        return index;
+    }
+
+    private int collectMetadataField(List<String> lines, int startIndex, Map<String, String> metadata, boolean stopOnUnknown) {
+        String field = metadataField(lines.get(startIndex));
+        if (field == null) {
+            return startIndex + 1;
         }
 
-        return new MetadataResult(values, index);
+        int index = startIndex + 1;
+        List<String> valueLines = new ArrayList<>();
+        String sameLineValue = extractValueAfterColon(lines.get(startIndex));
+        if (sameLineValue != null) {
+            valueLines.add(sameLineValue);
+        }
+
+        while (index < lines.size()) {
+            String candidate = lines.get(index);
+            if (isMetadataWrapperLine(candidate) || metadataField(candidate) != null || isSectionBoundary(candidate)) {
+                break;
+            }
+            if (stopOnUnknown && QUESTION_START_PATTERN.matcher(candidate).matches()) {
+                break;
+            }
+            valueLines.add(candidate);
+            index++;
+        }
+
+        metadata.put(field, joinLines(valueLines));
+        return index;
     }
 
     private void parseChoiceQuestion(QuestionImportQuestionDto question, List<String> content) {
@@ -830,10 +890,14 @@ public class QuestionImportParserService {
             explanationLines.add(firstLine);
         }
         for (int i = explanationIndex + 1; i < lines.size(); i++) {
-            if (isSubQuestionStartLine(lines.get(i))) {
+            String line = lines.get(i);
+            if (isSubQuestionStartLine(line)
+                || isMetadataWrapperLine(line)
+                || metadataField(line) != null
+                || QUESTION_START_PATTERN.matcher(line).matches()) {
                 break;
             }
-            explanationLines.add(lines.get(i));
+            explanationLines.add(line);
         }
         return toHtml(explanationLines);
     }
@@ -964,25 +1028,102 @@ public class QuestionImportParserService {
 
     private List<List<String>> splitIntoQuestionBlocks(List<String> lines) {
         List<List<String>> blocks = new ArrayList<>();
-        List<String> current = new ArrayList<>();
+        List<String> pendingPrefix = new ArrayList<>();
+        List<String> current = null;
+        boolean currentHasTail = false;
 
         for (String line : lines) {
             boolean isQuestionStart = QUESTION_START_PATTERN.matcher(line).matches();
-            if (isQuestionStart && !current.isEmpty()) {
-                blocks.add(current);
-                current = new ArrayList<>();
+            if (isQuestionStart) {
+                if (current != null && !current.isEmpty()) {
+                    blocks.add(current);
+                }
+                current = new ArrayList<>(pendingPrefix);
+                pendingPrefix.clear();
+                current.add(line);
+                currentHasTail = false;
+                continue;
             }
 
-            if (!current.isEmpty() || isQuestionStart) {
-                current.add(line);
+            if (current == null) {
+                pendingPrefix.add(line);
+                continue;
+            }
+
+            if (isNextQuestionPrefixLine(line) && currentHasTail) {
+                if (!current.isEmpty()) {
+                    blocks.add(current);
+                }
+                current = null;
+                pendingPrefix.add(line);
+                currentHasTail = false;
+                continue;
+            }
+
+            current.add(line);
+            if (isQuestionTailLine(line)) {
+                currentHasTail = true;
             }
         }
 
-        if (!current.isEmpty()) {
+        if (current != null && !current.isEmpty()) {
             blocks.add(current);
         }
 
         return blocks;
+    }
+
+    private String extractLeadingMetadataValue(List<String> block, String field) {
+        int questionStartIndex = findIndex(block, line -> QUESTION_START_PATTERN.matcher(line).matches());
+        if (questionStartIndex < 0) {
+            return null;
+        }
+
+        Map<String, String> metadata = new LinkedHashMap<>();
+        collectMetadataInto(slice(block, 0, questionStartIndex), 0, metadata);
+        return trimToNull(metadata.get(field));
+    }
+
+    private boolean isMetadataOrWrapperLine(String line) {
+        return metadataField(line) != null || isMetadataWrapperLine(line);
+    }
+
+    private boolean isMetadataWrapperLine(String line) {
+        return "metadata".equals(normalizeLabelKey(line));
+    }
+
+    private boolean isNextQuestionPrefixLine(String line) {
+        String field = metadataField(line);
+        return FIELD_TYPE.equals(field)
+            || FIELD_INSTRUCTION.equals(field)
+            || FIELD_SUBJECT.equals(field)
+            || FIELD_SUB_TOPIC.equals(field);
+    }
+
+    private boolean isQuestionTailLine(String line) {
+        if (line == null) {
+            return false;
+        }
+
+        String field = metadataField(line);
+        if (FIELD_DIFFICULTY.equals(field)
+            || FIELD_POINTS.equals(field)
+            || FIELD_BOOK.equals(field)
+            || FIELD_ETG.equals(field)
+            || FIELD_PAGE.equals(field)
+            || FIELD_QUESTION_NUMBER.equals(field)) {
+            return true;
+        }
+
+        return isMetadataWrapperLine(line)
+            || isOptionsLine(line)
+            || isCorrectAnswerLine(line)
+            || isExplanationLine(line)
+            || isArrangeItemsLine(line)
+            || isCorrectSequenceLine(line)
+            || isPairsLine(line)
+            || isCorrectMatchesLine(line)
+            || isSubQuestionStartLine(line);
     }
 
     private List<List<String>> splitIntoSubQuestionBlocks(List<String> lines) {
@@ -1081,10 +1222,17 @@ public class QuestionImportParserService {
         if (cleaned == null) {
             return null;
         }
+        String normalizedLabel = normalizeLabelKey(cleaned);
+
+        if ("difficultylevel".equals(normalizedLabel)) {
+            return FIELD_DIFFICULTY;
+        }
+        if ("subtopic".equals(normalizedLabel)) {
+            return FIELD_SUB_TOPIC;
+        }
 
         for (String field : METADATA_ORDER) {
-            if (cleaned.equalsIgnoreCase(field + ":")
-                || cleaned.toLowerCase(Locale.ROOT).startsWith(field.toLowerCase(Locale.ROOT) + ":")) {
+            if (normalizeFieldKey(field).equals(normalizedLabel)) {
                 return field;
             }
         }
@@ -1119,7 +1267,11 @@ public class QuestionImportParserService {
     }
 
     private boolean isExplanationLine(String line) {
-        return line != null && line.toLowerCase(Locale.ROOT).startsWith("explanation:");
+        if (line == null) {
+            return false;
+        }
+        String lower = line.toLowerCase(Locale.ROOT);
+        return lower.startsWith("explanation:") || lower.startsWith("justification:");
     }
 
     private boolean isArrangeItemsLine(String line) {
@@ -1221,6 +1373,27 @@ public class QuestionImportParserService {
         return trimmed.isEmpty() ? null : trimmed;
     }
 
+    private String normalizeLabelKey(String line) {
+        String cleaned = trimToNull(line);
+        if (cleaned == null) {
+            return null;
+        }
+        int colonIndex = cleaned.indexOf(':');
+        String label = colonIndex >= 0 ? cleaned.substring(0, colonIndex) : cleaned;
+        return normalizeFieldKey(label);
+    }
+
+    private String normalizeFieldKey(String value) {
+        String cleaned = trimToNull(value);
+        if (cleaned == null) {
+            return null;
+        }
+        return cleaned
+            .replaceAll("\\s+", "")
+            .replace(".", "")
+            .toLowerCase(Locale.ROOT);
+    }
+
     private String stripHtml(String value) {
         if (value == null) {
             return null;
@@ -1298,9 +1471,6 @@ public class QuestionImportParserService {
         } catch (IllegalArgumentException ex) {
             return encoded;
         }
-    }
-
-    private record MetadataResult(Map<String, String> values, int nextIndex) {
     }
 
     private static final class ParsedOption {
